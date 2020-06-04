@@ -9,7 +9,7 @@ const PaginationTable = (props) => {
   return (
     <ul className="pagination">
       {items}
-      </ul>
+    </ul>
   )
 }
 export default PaginationTable

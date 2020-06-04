@@ -6,7 +6,6 @@ import TableHeading from './TableHeading/TableHeading'
 export default class ProductsTable extends React.Component {
   constructor(props) {
     super(props)
-    this.props = props
     this.state = {
       products: [],
       productsPerPage: 20,
@@ -15,26 +14,11 @@ export default class ProductsTable extends React.Component {
     }
   }
 
-  sortedProducts = () => {
-    const clonedProducts = [...this.state.products]
-    const clickNumber = this.state.clickNumber
-    const MAX_CLICKS = 3
-    if(clickNumber === 2) {
-      return clonedProducts.sort().reverse()
-    }
-    if(clickNumber === MAX_CLICKS) {
-      return clonedProducts.sort((a,b) => {
-        if( a < b ) return -1
-        if( a > b) return 1
-        return 0
-      })
-    }
-    return clonedProducts
-  }
-  
   setActivePage(e) {
     e.preventDefault();
+
     const pageNumber = parseInt(e.currentTarget.dataset.number)
+
     new Promise((resolve) => {
       this.setState({
         activePage: pageNumber
