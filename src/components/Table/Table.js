@@ -1,105 +1,99 @@
-import React from 'react'
-import { Table } from 'react-bootstrap'
-import Product from './Product/Product'
-import PaginationTable from './Pagination/PaginationTable'
-import TableHeading from './TableHeading/TableHeading'
-export default class ProductsTable extends React.Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      products: [],
-      productsPerPage: 20,
-      activePage: 0,
-      activeProducts: []
-    }
-  }
+import React, {memo, useCallback, useEffect, useState} from 'react'
+import { TableHeading } from './TableHeading/TableHeading'
+import withApiService from "../../hoc/withApiService";
+import TableBody from "./TableBody/TableBody";
+import Pagination from "./Pagination/PaginationTable";
+import ErrorIndicator from "../ErrorIndicator/ErrorIndicator";
+import LoadingIndicator from "../LoadingIndicator/LoadingIndicator";
+import Heading from "../Heading/Heading";
 
-  setActivePage(e) {
-    e.preventDefault();
 
-    const pageNumber = parseInt(e.currentTarget.dataset.number)
+const ProductsTableInner = ({products}) => {
+    const itemsPerPage = 20
 
-    new Promise((resolve) => {
-      this.setState({
-        activePage: pageNumber
-      })
-      resolve()
-    })
-    .then(()=>{
-      this.setProducts()
-    })
-    
-  }
-  componentWillMount() {
-    fetch('./db.json')
-    .then((response) => response.json())
-    .then(products => {
-      this.setState({
-        products
-      })
-    })
-    .then(() => {
-      this.setProducts()
-    })
-  }
-  get tableHeadings() {
-    return Object.keys(this.state.products.reduce((result, obj) => {
-      return Object.assign(result, obj);
-    }, {}))
-  }
-   setProducts() {
-    const delimetr = this.state.activePage * this.state.productsPerPage
-    this.setState({
-      activeProducts: this.state.products.slice(delimetr, delimetr + this.state.productsPerPage)
-    })
-  }
-  get pagesCount() {
-    return Math.floor(this.state.products.length / this.state.productsPerPage)
-  }
-  headingClickHandler(activeProducts) {
-    this.setState({
-      activeProducts
-    })
-  }
-  get products() {
-    const delimetr = this.state.activePage * this.state.productsPerPage
-    return this.state.products.slice(delimetr, delimetr + this.state.productsPerPage)
-  }
-  render() {
+    const [paginatedProducts, setPaginatedProducts] = useState([])
+    const [filteredProducts, setFilteredProducts] = useState([])
+    const [searchedProducts, setSearchedProducts] = useState([])
+    const [currentPage, setCurrentPage] = useState(1)
+    const [searchValue, setSearchValue] = useState('')
+    useEffect(() => {
+        setPaginatedProducts(() => {
+            const startFrom = (currentPage - 1) * itemsPerPage
+
+            return products.slice(startFrom, startFrom + itemsPerPage)
+        })
+    }, [currentPage, products])
+    useEffect(() => {
+        setSearchedProducts(paginatedProducts)
+    }, [paginatedProducts])
+    useEffect(() => {
+        setFilteredProducts(searchedProducts)
+    }, [searchedProducts])
+
+
     return (
-      <div>
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            {this.tableHeadings.map((heading,index) => {
-              return (
-                <TableHeading 
-                key={index} 
-                products={this.state.activeProducts} 
-                originalProducts={this.products} 
-                clickHandler={this.headingClickHandler.bind(this)} 
-                name={heading} 
-                />
-              )
-            })}
-          </tr>
-        </thead>
-        <tbody>
-          {this.state.activeProducts.map((product, index) => {
-            return (
-              <Product 
-              key={index}
-              product={product}
-              />
-            )
-          })}
-        </tbody>
-      </Table>
-      <PaginationTable 
-      pagesCount={this.pagesCount} 
-      currentNumber={this.setActivePage.bind(this)}
-      />
-      </div>
-    )
-  }
+        <div className="container">
+            <div className="row justify-content-center">
+                <div className="col-lg-4">
+                    <Heading
+                        setSearchedProducts={setSearchedProducts}
+                        products={paginatedProducts}
+                        searchValue={searchValue}
+                        setSearchValue={setSearchValue}
+                    />
+                </div>
+                <div className="col-lg-10">
+
+                    <table className="table table-stripped">
+                        <TableHeading
+                            products={filteredProducts}
+                            searchedProducts={searchedProducts}
+                            setFilteredProducts={setFilteredProducts}/>
+
+                        <TableBody
+                            products={filteredProducts}/>
+                    </table>
+                    <Pagination
+                        currentPage={currentPage}
+                        setCurrentPage={setCurrentPage}
+                        products={products}
+                        itemsPerPage={itemsPerPage}
+                        setSearchValue={setSearchValue}
+                    />
+                </div>
+            </div>
+        </div>
+    );
+};
+const ProductsTableContainer = ({apiService}) => {
+    const [products, setProducts] = useState([])
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState(false)
+
+    useEffect(() => {
+        setLoading(true)
+        apiService
+            .getBooks()
+            .then(products => {
+                setProducts(products)
+                setLoading(false)
+            }).catch(err => {
+            setError(true)
+            setLoading(false)
+        })
+    }, [])
+    if (error) {
+        return (
+            <ErrorIndicator/>
+        )
+    }
+
+    if (loading) {
+        return (
+            <LoadingIndicator/>
+        )
+    }
+    return <ProductsTable products={products}/>
 }
+const ProductsTable = memo(ProductsTableInner)
+export default withApiService(ProductsTableContainer);

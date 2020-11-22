@@ -1,13 +1,11 @@
 import React from 'react';
 import './App.css';
-import ProductsTable from './components/Table/Table';
-import Heading from './components/Heading/Heading';
+import ProductsTableContainer from "./components/Table/Table";
 
-function App() {
+const App = () => {
   return (
     <div className="App">
-      <Heading />
-      <ProductsTable></ProductsTable>
+      <ProductsTableContainer />
     </div>
   );
 }

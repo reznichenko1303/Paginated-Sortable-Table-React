@@ -1,71 +1,60 @@
-import React from 'react'
+import React, {memo, useCallback, useEffect, useState} from 'react'
 
-class TableHeading extends React.Component {
-  constructor(props) {
-    super(props)
-    
-    this.state = {
-      clickNumber: 3
-    }
-  }
-  setClickNumer() {
-    const MAX_CLICKS = 3
-    
-    if (this.state.clickNumber === MAX_CLICKS) {
-      this.setState({
-        clickNumber: 1
-      })
-      return
-    }
+const TableHeadingInner = ({setFilteredProducts, products, searchedProducts}) => {
+    const [click, setClick] = useState(1)
+    const [sortByValue, setSortByValue] = useState('')
 
-    this.setState((state) => ({
-      clickNumber: state.clickNumber + 1
-    }))
-  }
-  get sortedProducts() {
-    const clonedProducts = [...this.props.products]
-    const sorted = clonedProducts.sort((a, b) => {
-      let x = a[this.props.name]
-      let y = b[this.props.name]
+    const sortFunction = useCallback(() => {
+        return [...products].sort((a, b) => {
+            if (isNaN(b[sortByValue]) && isNaN(a[sortByValue])) {
+                return a[sortByValue].localeCompare(b[sortByValue])
+            }
+            return a[sortByValue] - b[sortByValue]
+        })
+   }, [products, sortByValue])
 
-      if(typeof x === 'string' && typeof y === 'string') {
-        x = x.toLowerCase()
-        y = y.toLowerCase()
-      }
-      if (x > y) {
-        return -1
-      }
-      return 1
-    })
-
-    if(this.state.clickNumber === 1) {
-      return sorted
-    } else if (this.state.clickNumber === 2) {
-      return sorted.reverse()
-    } else {
-      return this.props.originalProducts
+    const sortProducts = (type) => {
+        if (type === 'desc') {
+            return sortFunction()
+        }
+        return sortFunction().reverse()
     }
 
-  }
-  sortHandler() {
-    new Promise((resolve) => {
-      this.setClickNumer()
-      resolve()
-    })
-    .then(() => {
-      return this.sortedProducts
-    })
-    .then(products => {
-      this.props.clickHandler(products)
-    })
-  }
-  render () {
+    const sortProductsHandler = (e) => {
+        const target = e.target
+        if (target.dataset.value !== sortByValue) {
+            setClick(1)
+        } else {
+            if (click === 3) {
+                setClick(1)
+            } else {
+                setClick((click) => click + 1)
+            }
+        }
+        setSortByValue(target.dataset.value)
+    }
+    useEffect(() => {
+        switch (click) {
+            case 1:
+                return setFilteredProducts(sortProducts('desc'))
+            case 2:
+                return setFilteredProducts(sortProducts())
+            default:
+                return setFilteredProducts(searchedProducts)
+        }
+    }, [click, sortByValue])
+
     return (
-      <th onClick={this.sortHandler.bind(this)}>
-      {this.props.name}
-    </th>
-    )
-  }
-}
+        <thead>
+        <tr>
+            <th scope="col" data-value="id" onClick={sortProductsHandler}>ID</th>
+            <th scope="col" data-value="title" onClick={sortProductsHandler}>Title</th>
+            <th scope="col" data-value="price" onClick={sortProductsHandler}>Price</th>
+            <th scope="col" data-value="color" onClick={sortProductsHandler}>Color</th>
+            <th scope="col" data-value="department" onClick={sortProductsHandler}>Department</th>
+        </tr>
+        </thead>
+    );
+};
 
-export default TableHeading
+export const TableHeading = memo(TableHeadingInner);

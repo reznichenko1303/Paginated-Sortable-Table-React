@@ -1,18 +1,14 @@
-import React from 'react';
+import React, {useCallback} from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import 'bootstrap/dist/css/bootstrap.min.css'
-import * as serviceWorker from './serviceWorker';
-
+import ApiService from "./apiService/apiService";
+import ApiContext from './apiContext/apiContext'
+const apiService = new ApiService()
 ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
+        <ApiContext.Provider value={apiService}>
+            <App/>
+        </ApiContext.Provider>,
+    document.getElementById('root')
 );
-
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.unregister();
